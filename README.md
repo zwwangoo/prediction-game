@@ -1,112 +1,114 @@
-# 预测游戏系统
+🎮 A prediction game system built entirely through AI pair programming using Cursor IDE - demonstrating the potential of AI-assisted development in creating a full-stack TypeScript/React application with zero manual coding. 🤖✨
 
-一个简单的预测游戏系统，允许用户创建和参与预测挑战。用户可以对事件结果进行预测，并在事件完成后确定胜负。
+# Prediction Game System
 
-## 功能特性
+A simple prediction game system that allows users to create and participate in prediction challenges. Users can make predictions about event outcomes and determine winners after events are completed.
 
-- 用户管理
-  - 创建新用户
-  - 查看用户列表
-  - 用户统计信息（总参与次数、胜负记录、资金统计等）
+## Features
 
-- 预测管理
-  - 创建预测挑战
-  - 设置预测金额和截止时间
-  - 查看预测列表
-  - 完成预测并确定胜负
+- User Management
+  - Create new users
+  - View user list
+  - User statistics (total participations, win/loss records, financial statistics)
 
-- 数据统计
-  - 用户胜负统计
-  - 资金收益统计
-  - 参与次数统计
+- Prediction Management
+  - Create prediction challenges
+  - Set prediction amounts and deadlines
+  - View prediction list
+  - Complete predictions and determine winners
 
-## 技术栈
+- Data Statistics
+  - User win/loss statistics
+  - Financial return statistics
+  - Participation frequency statistics
 
-### 前端
+## Tech Stack
+
+### Frontend
 - React
 - TypeScript
 - Material-UI
 - date-fns
 
-### 后端
+### Backend
 - Node.js
 - Express
 - PostgreSQL
 
-### 部署
+### Deployment
 - Docker
 - Docker Compose
 - Nginx
 
-## 部署说明
+## Deployment Guide
 
-1. 环境要求
+1. Requirements
    - Docker
    - Docker Compose
 
-2. 配置环境变量
+2. Environment Configuration
    ```bash
-   # 复制环境变量示例文件
+   # Copy environment variable example file
    cp .env.example .env
    
-   # 编辑.env文件，设置以下变量：
+   # Edit .env file and set the following variables:
    POSTGRES_USER=postgres
    POSTGRES_PASSWORD=your_password_here
    POSTGRES_DB=prediction_game
    JWT_SECRET=your_jwt_secret_here
    ```
 
-3. 启动服务
+3. Start Services
    ```bash
-   # 构建并启动所有服务
+   # Build and start all services
    docker-compose up -d
    ```
 
-4. 访问应用
-   - 应用将在 http://localhost 上运行
-   - API 服务通过 `/api` 路径访问
+4. Access Application
+   - Application runs at http://localhost
+   - API services are accessed via `/api` path
 
-## 目录结构
+## Directory Structure
 
 ```
 .
-├── client/                 # 前端代码
-│   ├── src/               # 源代码
-│   ├── public/            # 静态资源
-│   └── Dockerfile         # 前端Docker配置
-├── server/                # 后端代码
-│   ├── index.js          # 入口文件
-│   ├── init.sql          # 数据库初始化脚本
-│   └── Dockerfile        # 后端Docker配置
-├── docker-compose.yml     # Docker编排配置
-├── .env.example          # 环境变量示例
-└── README.md             # 项目说明文档
+├── client/                 # Frontend code
+│   ├── src/               # Source code
+│   ├── public/            # Static resources
+│   └── Dockerfile         # Frontend Docker config
+├── server/                # Backend code
+│   ├── index.js          # Entry file
+│   ├── init.sql          # Database init script
+│   └── Dockerfile        # Backend Docker config
+├── docker-compose.yml     # Docker compose config
+├── .env.example          # Environment variables example
+└── README.md             # Project documentation
 ```
 
-## 开发说明
+## Development Guide
 
-1. 前端开发
+1. Frontend Development
    ```bash
    cd client
    npm install
    npm start
    ```
 
-2. 后端开发
+2. Backend Development
    ```bash
    cd server
    npm install
    npm start
    ```
 
-## 数据库架构
+## Database Schema
 
-### users 表
+### users table
 - id: SERIAL PRIMARY KEY
 - name: VARCHAR(255) UNIQUE NOT NULL
 - created_at: TIMESTAMP WITH TIME ZONE
 
-### predictions 表
+### predictions table
 - id: SERIAL PRIMARY KEY
 - title: VARCHAR(255) NOT NULL
 - description: TEXT
@@ -120,85 +122,91 @@
 - due_date: TIMESTAMP WITH TIME ZONE
 - created_at: TIMESTAMP WITH TIME ZONE
 
-## 安装和运行
+## Installation and Setup
 
-### 环境要求
+### Requirements
 - Node.js 16+
 - Docker & Docker Compose
 - PostgreSQL 14+
 
-### 开发环境设置
+### Development Environment Setup
 
-1. 克隆项目
+1. Clone Project
 ```bash
 git clone <repository-url>
 cd prediction-game
 ```
 
-2. 安装依赖
+2. Install Dependencies
 ```bash
-# 安装前端依赖
+# Install frontend dependencies
 cd client
 npm install
 
-# 安装后端依赖
+# Install backend dependencies
 cd ../server
 npm install
 ```
 
-3. 环境配置
+3. Environment Setup
 ```bash
-# 在项目根目录创建.env文件
+# Create .env file in project root
 cp .env.example .env
-# 编辑.env文件，设置必要的环境变量
+# Edit .env file and set required environment variables
 ```
 
-4. 启动开发环境
+4. Start Development Environment
 ```bash
-# 启动数据库
+# Start database
 docker-compose up -d
 
-# 启动后端服务器（在server目录下）
+# Start backend server (in server directory)
 npm start
 
-# 启动前端开发服务器（在client目录下）
+# Start frontend dev server (in client directory)
 npm start
 ```
 
-### 生产环境部署
+### Production Deployment
 
-1. 构建前端
+1. Build Frontend
 ```bash
 cd client
 npm run build
 ```
 
-2. 使用Docker Compose启动所有服务
+2. Start All Services Using Docker Compose
 ```bash
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
-## API文档
+## API Documentation
 
-### 用户相关API
-- `GET /api/users` - 获取所有用户
-- `POST /api/users` - 创建新用户
+### User Related APIs
+- `GET /api/users` - Get all users
+- `POST /api/users` - Create new user
 
-### 预测相关API
-- `GET /api/predictions` - 获取所有预测记录
-- `POST /api/predictions` - 创建新预测
-- `PUT /api/predictions/:id/complete` - 完成预测并设置结果
+### Prediction Related APIs
+- `GET /api/predictions` - Get all prediction records
+- `POST /api/predictions` - Create new prediction
+- `PUT /api/predictions/:id/complete` - Complete prediction and set result
 
-## 开发规范
+## Development Standards
 
-1. 代码风格
-   - 使用ESLint和Prettier保持代码风格一致
-   - 遵循TypeScript的类型定义规范
+1. Code Style
+   - Use ESLint and Prettier for consistent code style
+   - Follow TypeScript type definition standards
 
-2. Git提交规范
-   - 使用清晰的提交信息
-   - 每个功能或修复使用单独的分支
+2. Git Commit Standards
+   - Use clear commit messages
+   - Use separate branches for each feature or fix
 
-## 许可证
+## License
 
-MIT License 
+MIT License
+
+---
+
+# 中文文档
+
+[点击展开中文版本](./README.zh.md) 
