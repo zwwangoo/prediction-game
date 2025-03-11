@@ -13,7 +13,7 @@ import {
   Typography,
   Divider,
 } from '@mui/material';
-import { DateTimePicker, DatePicker } from '@mui/x-date-pickers';
+import { DatePicker } from '@mui/x-date-pickers';
 import { format, startOfMonth, endOfDay } from 'date-fns';
 import zhCN from 'date-fns/locale/zh-CN';
 import { User } from '../types/user';
@@ -32,7 +32,7 @@ interface UserStats {
 
 interface Props {
   users: User[];
-  onUserAdded: (name: string) => void;
+  onUserAdded: (name: string) => Promise<boolean>;
 }
 
 export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
@@ -138,25 +138,16 @@ export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: newUsername.trim() }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || '创建用户失败');
-      }
-
-      onUserAdded(newUsername.trim());
-      // 添加用户后刷新用户统计信息
-      setTimeout(() => {
+      // 使用传入的onUserAdded函数添加用户
+      const success = await onUserAdded(newUsername.trim());
+      
+      if (success) {
+        // 添加用户成功后刷新用户统计信息
         fetchUserStats();
-      }, 500); // 添加一个小延迟，确保服务器有时间处理请求
-      handleClose();
+        handleClose();
+      } else {
+        throw new Error('创建用户失败');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '创建用户失败');
     }
@@ -164,7 +155,7 @@ export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
 
   return (
     <Stack spacing={2}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box display="flex" flexDirection="column" gap={2} mb={2}>
         <Box display="flex" gap={2}>
           <DatePicker
             label="开始日期"
@@ -188,12 +179,14 @@ export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
             刷新数据
           </Button>
         </Box>
-        <Button 
-          variant="contained" 
-          onClick={() => setOpen(true)}
-        >
-          添加用户
-        </Button>
+        <Box>
+          <Button 
+            variant="contained" 
+            onClick={() => setOpen(true)}
+          >
+            添加用户
+          </Button>
+        </Box>
       </Box>
 
       {users.map((user) => (

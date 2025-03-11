@@ -5,9 +5,6 @@ import {
   Tab,
   Tabs,
   Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
   Button,
   Stack,
 } from '@mui/material';
@@ -15,22 +12,22 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import zhCN from 'date-fns/locale/zh-CN';
 import { UserManagement } from './components/UserManagement';
-import { BetForm } from './components/BetForm';
-import { BetList } from './components/BetList';
+import { PredictionForm } from './components/PredictionForm';
+import { PredictionList } from './components/PredictionList';
 import { User } from './types/user';
-import { Bet } from './types/bet';
+import { Prediction } from './types/prediction';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 export const App = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [bets, setBets] = useState<Bet[]>([]);
+  const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     fetchUsers();
-    fetchBets();
+    fetchPredictions();
   }, []);
 
   const fetchUsers = async () => {
@@ -43,40 +40,40 @@ export const App = () => {
     }
   };
 
-  const fetchBets = async () => {
+  const fetchPredictions = async () => {
     try {
-      const response = await fetch(`${API_URL}/bets`);
+      const response = await fetch(`${API_URL}/predictions`);
       const data = await response.json();
-      setBets(data);
+      setPredictions(data);
     } catch (error) {
-      console.error('Error fetching bets:', error);
+      console.error('Error fetching predictions:', error);
     }
   };
 
-  const handleCreateBet = async (bet: Omit<Bet, 'id' | 'status' | 'createdAt'>) => {
+  const handleCreatePrediction = async (prediction: Omit<Prediction, 'id' | 'status' | 'createdAt'>) => {
     try {
-      const response = await fetch(`${API_URL}/bets`, {
+      const response = await fetch(`${API_URL}/predictions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...bet,
+          ...prediction,
           status: 'pending',
         }),
       });
       if (response.ok) {
-        fetchBets();
+        fetchPredictions();
         setIsDialogOpen(false);
       }
     } catch (error) {
-      console.error('Error creating bet:', error);
+      console.error('Error creating prediction:', error);
     }
   };
 
-  const handleCompleteBet = async (betId: string, winnerId: string) => {
+  const handleCompletePrediction = async (predictionId: string, winnerId: string) => {
     try {
-      const response = await fetch(`${API_URL}/bets/${betId}/complete`, {
+      const response = await fetch(`${API_URL}/predictions/${predictionId}/complete`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -86,10 +83,10 @@ export const App = () => {
         }),
       });
       if (response.ok) {
-        fetchBets();
+        fetchPredictions();
       }
     } catch (error) {
-      console.error('Error completing bet:', error);
+      console.error('Error completing prediction:', error);
     }
   };
 
@@ -103,32 +100,45 @@ export const App = () => {
         body: JSON.stringify({ name }),
       });
       if (response.ok) {
-        fetchUsers();
+        await fetchUsers();
+        return true;
       }
+      return false;
     } catch (error) {
       console.error('Error creating user:', error);
+      return false;
     }
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={zhCN}>
+    <LocalizationProvider 
+      dateAdapter={AdapterDateFns} 
+      adapterLocale={zhCN}
+      dateFormats={{ 
+        year: 'yyyy',
+        month: 'yyyy-MM',
+        dayOfMonth: 'dd',
+        fullDate: 'yyyy-MM-dd',
+        fullDateTime: 'yyyy-MM-dd HH:mm:ss',
+      }}
+    >
       <CssBaseline />
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs value={currentTab} onChange={(_, value) => setCurrentTab(value)}>
-            <Tab label="对赌记录" />
+            <Tab label="预测记录" />
             <Tab label="用户管理" />
           </Tabs>
         </Box>
 
         {currentTab === 0 && (
           <Box>
-            <Stack direction="row" justifyContent="flex-end" mb={2}>
+            <Stack direction="row" justifyContent="flex-start" mb={2}>
               <Button variant="contained" onClick={() => setIsDialogOpen(true)}>
-                创建对赌
+                创建预测
               </Button>
             </Stack>
-            <BetList bets={bets} onComplete={handleCompleteBet} />
+            <PredictionList predictions={predictions} onComplete={handleCompletePrediction} />
           </Box>
         )}
 
@@ -136,10 +146,10 @@ export const App = () => {
           <UserManagement users={users} onUserAdded={handleCreateUser} />
         )}
 
-        <BetForm
+        <PredictionForm
           open={isDialogOpen}
           onClose={() => setIsDialogOpen(false)}
-          onSubmit={handleCreateBet}
+          onSubmit={handleCreatePrediction}
           users={users}
         />
       </Container>

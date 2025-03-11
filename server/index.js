@@ -7,11 +7,11 @@ app.use(cors());
 app.use(express.json());
 
 const pool = new Pool({
-  user: 'postgres',
-  host: '192.168.1.233',
-  database: 'betting_game',
-  password: 'mypgadmin',
-  port: 5432,
+  user: process.env.POSTGRES_USER || 'postgres',
+  host: process.env.POSTGRES_HOST || 'localhost',
+  database: process.env.POSTGRES_DB || 'prediction_game',
+  password: process.env.POSTGRES_PASSWORD || 'mypgadmin',
+  port: parseInt(process.env.POSTGRES_PORT || '5432'),
 });
 
 // 用户管理 API
@@ -43,48 +43,48 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-// 对赌记录 API
-app.get('/api/bets', async (req, res) => {
+// 预测记录 API
+app.get('/api/predictions', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
         b.*,
         c.name as creator_name,
         o.name as opponent_name
-      FROM bets b
+      FROM predictions b
       JOIN users c ON b.creator_id = c.id
       JOIN users o ON b.opponent_id = o.id
       ORDER BY b.created_at DESC
     `);
 
     // 转换数据格式以匹配前端期望
-    const formattedBets = result.rows.map(bet => ({
-      id: bet.id.toString(),
-      title: bet.title,
-      description: bet.description,
-      amount: parseFloat(bet.amount),
-      status: bet.status,
-      winner: bet.winner_id ? (bet.winner_id === bet.creator_id ? bet.creator_name : bet.opponent_name) : undefined,
-      createdAt: bet.created_at,
-      dueDate: bet.due_date,
+    const formattedPredictions = result.rows.map(prediction => ({
+      id: prediction.id.toString(),
+      title: prediction.title,
+      description: prediction.description,
+      amount: parseFloat(prediction.amount),
+      status: prediction.status,
+      winner: prediction.winner_id ? (prediction.winner_id === prediction.creator_id ? prediction.creator_name : prediction.opponent_name) : undefined,
+      createdAt: prediction.created_at,
+      dueDate: prediction.due_date,
       creator: {
-        name: bet.creator_name,
-        prediction: bet.creator_prediction
+        name: prediction.creator_name,
+        prediction: prediction.creator_prediction
       },
       opponent: {
-        name: bet.opponent_name,
-        prediction: bet.opponent_prediction
+        name: prediction.opponent_name,
+        prediction: prediction.opponent_prediction
       }
     }));
 
-    res.json(formattedBets);
+    res.json(formattedPredictions);
   } catch (error) {
-    console.error('Error fetching bets:', error);
+    console.error('Error fetching predictions:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-app.post('/api/bets', async (req, res) => {
+app.post('/api/predictions', async (req, res) => {
   const {
     title,
     description,
@@ -107,121 +107,121 @@ app.post('/api/bets', async (req, res) => {
     const opponentId = opponentUser.rows[0].id;
 
     const result = await pool.query(
-      `INSERT INTO bets (
+      `INSERT INTO predictions (
         title, description, amount, creator_id, opponent_id,
         creator_prediction, opponent_prediction, due_date
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [title, description, amount, creatorId, opponentId, creator.prediction, opponent.prediction, dueDate]
     );
 
-    // 获取完整的投注信息，包括用户名
-    const betWithNames = await pool.query(`
+    // 获取完整的预测信息，包括用户名
+    const predictionWithNames = await pool.query(`
       SELECT 
         b.*,
         c.name as creator_name,
         o.name as opponent_name
-      FROM bets b
+      FROM predictions b
       JOIN users c ON b.creator_id = c.id
       JOIN users o ON b.opponent_id = o.id
       WHERE b.id = $1
     `, [result.rows[0].id]);
 
     // 转换数据格式以匹配前端期望
-    const formattedBet = {
-      id: betWithNames.rows[0].id.toString(),
-      title: betWithNames.rows[0].title,
-      description: betWithNames.rows[0].description,
-      amount: parseFloat(betWithNames.rows[0].amount),
-      status: betWithNames.rows[0].status,
+    const formattedPrediction = {
+      id: predictionWithNames.rows[0].id.toString(),
+      title: predictionWithNames.rows[0].title,
+      description: predictionWithNames.rows[0].description,
+      amount: parseFloat(predictionWithNames.rows[0].amount),
+      status: predictionWithNames.rows[0].status,
       winner: undefined,
-      createdAt: betWithNames.rows[0].created_at,
-      dueDate: betWithNames.rows[0].due_date,
+      createdAt: predictionWithNames.rows[0].created_at,
+      dueDate: predictionWithNames.rows[0].due_date,
       creator: {
-        name: betWithNames.rows[0].creator_name,
-        prediction: betWithNames.rows[0].creator_prediction
+        name: predictionWithNames.rows[0].creator_name,
+        prediction: predictionWithNames.rows[0].creator_prediction
       },
       opponent: {
-        name: betWithNames.rows[0].opponent_name,
-        prediction: betWithNames.rows[0].opponent_prediction
+        name: predictionWithNames.rows[0].opponent_name,
+        prediction: predictionWithNames.rows[0].opponent_prediction
       }
     };
 
-    res.json(formattedBet);
+    res.json(formattedPrediction);
   } catch (error) {
-    console.error('Error creating bet:', error);
+    console.error('Error creating prediction:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-app.put('/api/bets/:id/complete', async (req, res) => {
+app.put('/api/predictions/:id/complete', async (req, res) => {
   const { id } = req.params;
   const { winnerId } = req.body;
 
   try {
-    // 先获取对赌信息
-    const betInfo = await pool.query(`
+    // 先获取预测信息
+    const predictionInfo = await pool.query(`
       SELECT 
         b.*,
         c.id as creator_id,
         c.name as creator_name,
         o.id as opponent_id,
         o.name as opponent_name
-      FROM bets b
+      FROM predictions b
       JOIN users c ON b.creator_id = c.id
       JOIN users o ON b.opponent_id = o.id
       WHERE b.id = $1
     `, [id]);
 
-    if (betInfo.rows.length === 0) {
-      return res.status(404).json({ error: '对赌记录不存在' });
+    if (predictionInfo.rows.length === 0) {
+      return res.status(404).json({ error: '预测记录不存在' });
     }
 
-    const bet = betInfo.rows[0];
+    const prediction = predictionInfo.rows[0];
     // 根据胜利者名字确定对应的用户ID
-    const winnerUserId = winnerId === bet.creator_name ? bet.creator_id : bet.opponent_id;
+    const winnerUserId = winnerId === prediction.creator_name ? prediction.creator_id : prediction.opponent_id;
 
     const result = await pool.query(
-      'UPDATE bets SET status = $1, winner_id = $2 WHERE id = $3 RETURNING *',
+      'UPDATE predictions SET status = $1, winner_id = $2 WHERE id = $3 RETURNING *',
       ['completed', winnerUserId, id]
     );
 
-    // 获取完整的投注信息，包括用户名
-    const betWithNames = await pool.query(`
+    // 获取完整的预测信息，包括用户名
+    const predictionWithNames = await pool.query(`
       SELECT 
         b.*,
         c.name as creator_name,
         o.name as opponent_name
-      FROM bets b
+      FROM predictions b
       JOIN users c ON b.creator_id = c.id
       JOIN users o ON b.opponent_id = o.id
       WHERE b.id = $1
     `, [id]);
 
     // 转换数据格式以匹配前端期望
-    const formattedBet = {
-      id: betWithNames.rows[0].id.toString(),
-      title: betWithNames.rows[0].title,
-      description: betWithNames.rows[0].description,
-      amount: parseFloat(betWithNames.rows[0].amount),
-      status: betWithNames.rows[0].status,
-      winner: betWithNames.rows[0].winner_id === betWithNames.rows[0].creator_id 
-        ? betWithNames.rows[0].creator_name 
-        : betWithNames.rows[0].opponent_name,
-      createdAt: betWithNames.rows[0].created_at,
-      dueDate: betWithNames.rows[0].due_date,
+    const formattedPrediction = {
+      id: predictionWithNames.rows[0].id.toString(),
+      title: predictionWithNames.rows[0].title,
+      description: predictionWithNames.rows[0].description,
+      amount: parseFloat(predictionWithNames.rows[0].amount),
+      status: predictionWithNames.rows[0].status,
+      winner: predictionWithNames.rows[0].winner_id === predictionWithNames.rows[0].creator_id 
+        ? predictionWithNames.rows[0].creator_name 
+        : predictionWithNames.rows[0].opponent_name,
+      createdAt: predictionWithNames.rows[0].created_at,
+      dueDate: predictionWithNames.rows[0].due_date,
       creator: {
-        name: betWithNames.rows[0].creator_name,
-        prediction: betWithNames.rows[0].creator_prediction
+        name: predictionWithNames.rows[0].creator_name,
+        prediction: predictionWithNames.rows[0].creator_prediction
       },
       opponent: {
-        name: betWithNames.rows[0].opponent_name,
-        prediction: betWithNames.rows[0].opponent_prediction
+        name: predictionWithNames.rows[0].opponent_name,
+        prediction: predictionWithNames.rows[0].opponent_prediction
       }
     };
 
-    res.json(formattedBet);
+    res.json(formattedPrediction);
   } catch (error) {
-    console.error('Error completing bet:', error);
+    console.error('Error completing prediction:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -232,7 +232,7 @@ app.get('/api/stats', async (req, res) => {
 
   try {
     const result = await pool.query(`
-      WITH user_bets AS (
+      WITH user_predictions AS (
         SELECT
           CASE
             WHEN creator_id = $1 THEN 
@@ -246,18 +246,19 @@ app.get('/api/stats', async (req, res) => {
             WHEN opponent_id = $1 THEN
               CASE WHEN winner_id = opponent_id THEN amount ELSE -amount END
           END as amount_change
-        FROM bets
+        FROM predictions
         WHERE (creator_id = $1 OR opponent_id = $1)
           AND status = 'completed'
-          AND created_at BETWEEN $2 AND $3
+          ${startDate ? "AND created_at >= $2" : ""}
+          ${endDate ? `AND created_at <= ${startDate ? "$3" : "$2"}` : ""}
       )
       SELECT
-        (SELECT name FROM users WHERE id = $1) as user_name,
-        COUNT(CASE WHEN outcome = 'win' THEN 1 END) as total_wins,
-        COUNT(CASE WHEN outcome = 'loss' THEN 1 END) as total_losses,
-        COALESCE(SUM(amount_change), 0) as net_amount
-      FROM user_bets
-    `, [userId, startDate, endDate]);
+        COUNT(*) as total_predictions,
+        COUNT(*) FILTER (WHERE outcome = 'win') as wins,
+        COUNT(*) FILTER (WHERE outcome = 'loss') as losses,
+        COALESCE(SUM(amount_change), 0) as total_profit
+      FROM user_predictions
+    `, [userId, startDate, endDate].filter(Boolean));
 
     res.json(result.rows[0]);
   } catch (error) {
@@ -266,7 +267,7 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+const port = process.env.PORT || 3001;
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 }); 

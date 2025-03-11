@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -12,6 +12,7 @@ import {
   Select,
   MenuItem,
   Stack,
+  FormHelperText,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { User } from '../types/user';
@@ -23,7 +24,7 @@ interface Props {
   users: User[];
 }
 
-export const BetForm: React.FC<Props> = ({ open, onClose, onSubmit, users }) => {
+export const PredictionForm: React.FC<Props> = ({ open, onClose, onSubmit, users }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -32,8 +33,34 @@ export const BetForm: React.FC<Props> = ({ open, onClose, onSubmit, users }) => 
   const [opponent, setOpponent] = useState('');
   const [opponentPrediction, setOpponentPrediction] = useState('');
   const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [predictionError, setPredictionError] = useState('');
+
+  useEffect(() => {
+    if (creatorPrediction && opponentPrediction && 
+        creatorPrediction.trim().toLowerCase() === opponentPrediction.trim().toLowerCase()) {
+      setPredictionError('创建者和对手的预测结果不能相同');
+    } else {
+      setPredictionError('');
+    }
+  }, [creatorPrediction, opponentPrediction]);
+
+  useEffect(() => {
+    if (creator && opponent && creator === opponent) {
+      setOpponent('');
+    }
+  }, [creator, opponent]);
+
+  useEffect(() => {
+    if (creator && opponent && creator === opponent) {
+      setCreator('');
+    }
+  }, [creator, opponent]);
 
   const handleSubmit = () => {
+    if (predictionError) {
+      return;
+    }
+    
     onSubmit({
       title,
       description,
@@ -65,7 +92,7 @@ export const BetForm: React.FC<Props> = ({ open, onClose, onSubmit, users }) => 
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>新建对赌</DialogTitle>
+      <DialogTitle>新建预测挑战</DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           <TextField
@@ -94,50 +121,61 @@ export const BetForm: React.FC<Props> = ({ open, onClose, onSubmit, users }) => 
           />
           <Box sx={{ display: 'flex', gap: 2 }}>
             <FormControl fullWidth required>
-              <InputLabel>创建者</InputLabel>
+              <InputLabel>发起者</InputLabel>
               <Select
                 value={creator}
-                label="创建者"
+                label="发起者"
                 onChange={(e) => setCreator(e.target.value)}
               >
-                {users.map((user) => (
-                  <MenuItem key={user.id} value={user.name}>
-                    {user.name}
-                  </MenuItem>
-                ))}
+                {users
+                  .filter(user => !opponent || user.name !== opponent)
+                  .map((user) => (
+                    <MenuItem key={user.id} value={user.name}>
+                      {user.name}
+                    </MenuItem>
+                  ))
+                }
               </Select>
             </FormControl>
             <TextField
-              label="创建者预测"
+              label="发起者预测"
               value={creatorPrediction}
               onChange={(e) => setCreatorPrediction(e.target.value)}
               fullWidth
               required
+              error={!!predictionError}
             />
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <FormControl fullWidth required>
-              <InputLabel>对手</InputLabel>
+              <InputLabel>参与者</InputLabel>
               <Select
                 value={opponent}
-                label="对手"
+                label="参与者"
                 onChange={(e) => setOpponent(e.target.value)}
               >
-                {users.map((user) => (
-                  <MenuItem key={user.id} value={user.name}>
-                    {user.name}
-                  </MenuItem>
-                ))}
+                {users
+                  .filter(user => !creator || user.name !== creator)
+                  .map((user) => (
+                    <MenuItem key={user.id} value={user.name}>
+                      {user.name}
+                    </MenuItem>
+                  ))
+                }
               </Select>
             </FormControl>
             <TextField
-              label="对手预测"
+              label="参与者预测"
               value={opponentPrediction}
               onChange={(e) => setOpponentPrediction(e.target.value)}
               fullWidth
               required
+              error={!!predictionError}
             />
           </Box>
+          {predictionError && (
+            <FormHelperText error>{predictionError}</FormHelperText>
+          )}
           <DateTimePicker
             label="截止时间"
             value={dueDate}
@@ -151,7 +189,15 @@ export const BetForm: React.FC<Props> = ({ open, onClose, onSubmit, users }) => 
         <Button 
           onClick={handleSubmit}
           variant="contained"
-          disabled={!title || !amount || !creator || !creatorPrediction || !opponent || !opponentPrediction}
+          disabled={
+            !title || 
+            !amount || 
+            !creator || 
+            !creatorPrediction || 
+            !opponent || 
+            !opponentPrediction || 
+            !!predictionError
+          }
         >
           创建
         </Button>
