@@ -17,7 +17,7 @@ import { PredictionList } from './components/PredictionList';
 import { User } from './types/user';
 import { Prediction } from './types/prediction';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const API_URL = process.env.REACT_APP_API_URL || '/api';
 
 export const App = () => {
   const [currentTab, setCurrentTab] = useState(0);
