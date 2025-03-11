@@ -52,6 +52,12 @@ A simple prediction game system that allows users to create and participate in p
    cp .env.example .env
    
    # Edit .env file and set the following variables:
+   NODE_ENV=production
+   PORT=3000
+   REACT_APP_API_URL=http://localhost:3000
+   DATABASE_URL=postgresql://postgres:your_password_here@postgres:5432/prediction_game
+   POSTGRES_HOST=postgres
+   POSTGRES_PORT=5432
    POSTGRES_USER=postgres
    POSTGRES_PASSWORD=your_password_here
    POSTGRES_DB=prediction_game
@@ -65,8 +71,8 @@ A simple prediction game system that allows users to create and participate in p
    ```
 
 4. Access Application
-   - Application runs at http://localhost
-   - API services are accessed via `/api` path
+   - Frontend application runs at http://localhost:5678
+   - Backend API services are accessed via http://localhost:5678/api
 
 ## Directory Structure
 

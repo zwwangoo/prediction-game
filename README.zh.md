@@ -52,6 +52,12 @@
    cp .env.example .env
    
    # 编辑.env文件，设置以下变量：
+   NODE_ENV=production
+   PORT=3000
+   REACT_APP_API_URL=http://localhost:3000
+   DATABASE_URL=postgresql://postgres:your_password_here@postgres:5432/prediction_game
+   POSTGRES_HOST=postgres
+   POSTGRES_PORT=5432
    POSTGRES_USER=postgres
    POSTGRES_PASSWORD=your_password_here
    POSTGRES_DB=prediction_game
@@ -65,8 +71,8 @@
    ```
 
 4. 访问应用
-   - 应用将在 http://localhost 上运行
-   - API 服务通过 `/api` 路径访问
+   - 前端应用运行在 http://localhost:5678
+   - 后端 API 服务通过 http://localhost:5678/api 访问
 
 ## 目录结构
 
