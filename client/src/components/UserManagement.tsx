@@ -12,6 +12,9 @@ import {
   TextField,
   Typography,
   Divider,
+  useTheme,
+  useMediaQuery,
+  Grid,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { format, startOfMonth, endOfDay } from 'date-fns';
@@ -34,6 +37,10 @@ interface Props {
 }
 
 export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [open, setOpen] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [error, setError] = useState('');
@@ -151,83 +158,134 @@ export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
     }
   };
 
+  // 添加排序后的用户列表计算
+  const sortedUsers = users.slice().sort((a, b) => {
+    const aNetAmount = userStats[a.name]?.netAmount || 0;
+    const bNetAmount = userStats[b.name]?.netAmount || 0;
+    return bNetAmount - aNetAmount; // 按照净收益降序排序
+  });
+
   return (
     <Stack spacing={2}>
-      <Box display="flex" flexDirection="column" gap={2} mb={2}>
-        <Box display="flex" gap={2}>
-          <DatePicker
-            label="开始日期"
-            value={startDate}
-            onChange={(newValue) => setStartDate(newValue)}
-            maxDate={endDate || undefined}
-            sx={{ width: 240 }}
-          />
-          <DatePicker
-            label="结束日期"
-            value={endDate}
-            onChange={(newValue) => setEndDate(newValue)}
-            minDate={startDate || undefined}
-            maxDate={endOfDay(new Date())}
-            sx={{ width: 240 }}
-          />
-          <Button 
-            variant="outlined" 
-            onClick={fetchUserStats}
-          >
-            刷新数据
-          </Button>
-        </Box>
-        <Box>
-          <Button 
-            variant="contained" 
-            onClick={() => setOpen(true)}
-          >
-            添加用户
-          </Button>
-        </Box>
+      <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} gap={2} mb={2}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={8}>
+            <Box display="flex" gap={2} flexDirection={isMobile ? 'column' : 'row'}>
+              <DatePicker
+                label="开始日期"
+                value={startDate}
+                onChange={(newValue) => setStartDate(newValue)}
+                maxDate={endDate || undefined}
+                sx={{ 
+                  width: isMobile ? '100%' : 200,
+                  '& .MuiInputBase-root': {
+                    height: 40,
+                  },
+                  '& .MuiInputBase-input': {
+                    padding: '8px 14px',
+                  }
+                }}
+                slotProps={{
+                  textField: {
+                    size: "small"
+                  }
+                }}
+              />
+              <DatePicker
+                label="结束日期"
+                value={endDate}
+                onChange={(newValue) => setEndDate(newValue)}
+                minDate={startDate || undefined}
+                maxDate={endOfDay(new Date())}
+                sx={{ 
+                  width: isMobile ? '100%' : 200,
+                  '& .MuiInputBase-root': {
+                    height: 40,
+                  },
+                  '& .MuiInputBase-input': {
+                    padding: '8px 14px',
+                  }
+                }}
+                slotProps={{
+                  textField: {
+                    size: "small"
+                  }
+                }}
+              />
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box display="flex" gap={2} flexDirection={isMobile ? 'column' : 'row'} justifyContent={isMobile ? 'stretch' : 'flex-end'}>
+              <Button 
+                variant="outlined" 
+                onClick={fetchUserStats}
+                fullWidth={isMobile}
+                size="small"
+                sx={{ 
+                  minWidth: isMobile ? '100%' : 100,
+                  height: 40
+                }}
+              >
+                刷新数据
+              </Button>
+              <Button 
+                variant="contained" 
+                onClick={() => setOpen(true)}
+                fullWidth={isMobile}
+                size="small"
+                sx={{ 
+                  minWidth: isMobile ? '100%' : 100,
+                  height: 40
+                }}
+              >
+                添加用户
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
       </Box>
 
-      {users.map((user) => (
+      {sortedUsers.map((user) => (
         <Card key={user.id}>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Box sx={{ minWidth: 200 }}>
-                <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                  {user.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  创建时间：{format(new Date(user.created_at), 'yyyy-MM-dd HH:mm', { locale: zhCN })}
-                </Typography>
-              </Box>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={2}>
+                <Box sx={{ mb: isMobile ? 2 : 0 }}>
+                  <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+                    {user.name}
+                  </Typography>
+                </Box>
+              </Grid>
 
-              <Divider orientation="vertical" flexItem />
+              {!isMobile && <Grid item xs={12} md={1}><Divider orientation="vertical" /></Grid>}
+              {isMobile && <Grid item xs={12}><Divider /></Grid>}
 
-              <Box>
+              <Grid item xs={6} sm={6} md={2}>
                 <Typography variant="body2" color="text.secondary">总参与/已完成</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                   <span style={{ color: '#1976d2' }}>{userStats[user.name]?.totalBets || 0}</span>
                   /
                   <span style={{ color: '#424242' }}>{userStats[user.name]?.completedBets || 0}</span>
                 </Typography>
-              </Box>
+              </Grid>
 
-              <Box>
+              <Grid item xs={6} sm={6} md={2}>
                 <Typography variant="body2" color="text.secondary">胜/负</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                   <span style={{ color: '#2e7d32' }}>{userStats[user.name]?.wonBets || 0}</span>
                   /
                   <span style={{ color: '#d32f2f' }}>{(userStats[user.name]?.completedBets || 0) - (userStats[user.name]?.wonBets || 0)}</span>
                 </Typography>
-              </Box>
+              </Grid>
 
-              <Box>
+              <Grid item xs={6} sm={6} md={2}>
                 <Typography variant="body2" color="text.secondary">总参与金额</Typography>
                 <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
                   ¥{(userStats[user.name]?.totalAmount || 0).toFixed(2)}
                 </Typography>
-              </Box>
+              </Grid>
 
-              <Box>
+              <Grid item xs={6} sm={6} md={2}>
                 <Typography variant="body2" color="text.secondary">净收益</Typography>
                 <Typography 
                   variant="h6" 
@@ -240,8 +298,8 @@ export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
                   {(userStats[user.name]?.netAmount || 0) > 0 ? '+' : ''}
                   ¥{(userStats[user.name]?.netAmount || 0).toFixed(2)}
                 </Typography>
-              </Box>
-            </Box>
+              </Grid>
+            </Grid>
           </CardContent>
         </Card>
       ))}
@@ -251,6 +309,7 @@ export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
         onClose={handleClose} 
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>添加新用户</DialogTitle>
         <DialogContent>
@@ -266,7 +325,7 @@ export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
             sx={{ mt: 2 }}
           />
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ p: 2 }}>
           <Button onClick={handleClose}>取消</Button>
           <Button onClick={handleSubmit} variant="contained">
             添加

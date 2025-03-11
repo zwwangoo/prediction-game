@@ -8,6 +8,8 @@ import {
   Stack,
   Chip,
   Divider,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { format } from 'date-fns';
 import zhCN from 'date-fns/locale/zh-CN';
@@ -19,6 +21,9 @@ interface Props {
 }
 
 export const PredictionList: React.FC<Props> = ({ predictions, onComplete }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const getStatusText = (status: string) => {
     switch (status) {
       case 'completed':
@@ -84,7 +89,7 @@ export const PredictionList: React.FC<Props> = ({ predictions, onComplete }) => 
 
             <Divider sx={{ my: 2 }} />
 
-            <Box sx={{ position: 'relative', height: '40px', mb: 2 }}>
+            <Box sx={{ position: 'relative', height: isMobile ? '80px' : '40px', mb: 2 }}>
               <Box
                 sx={{
                   position: 'absolute',
@@ -92,12 +97,13 @@ export const PredictionList: React.FC<Props> = ({ predictions, onComplete }) => 
                   height: '100%',
                   borderRadius: 1,
                   display: 'flex',
+                  flexDirection: isMobile ? 'column' : 'row',
                 }}
               >
                 <Box
                   sx={{
-                    width: '50%',
-                    height: '100%',
+                    width: isMobile ? '100%' : '50%',
+                    height: isMobile ? '50%' : '100%',
                     bgcolor: prediction.status === 'completed' ? 
                       (prediction.winner === prediction.creator.name ? '#e3f2fd' : '#f5f5f5') : 
                       '#f5f5f5',
@@ -108,8 +114,8 @@ export const PredictionList: React.FC<Props> = ({ predictions, onComplete }) => 
                 />
                 <Box
                   sx={{
-                    width: '50%',
-                    height: '100%',
+                    width: isMobile ? '100%' : '50%',
+                    height: isMobile ? '50%' : '100%',
                     bgcolor: prediction.status === 'completed' ? 
                       (prediction.winner === prediction.opponent.name ? '#e8f5e9' : '#f5f5f5') : 
                       '#f5f5f5',
@@ -125,26 +131,38 @@ export const PredictionList: React.FC<Props> = ({ predictions, onComplete }) => 
                   width: '100%',
                   height: '100%',
                   display: 'flex',
+                  flexDirection: isMobile ? 'column' : 'row',
                   alignItems: 'center',
                 }}
               >
                 <Box
                   sx={{
                     flex: 1,
+                    width: '100%',
+                    height: isMobile ? '50%' : '100%',
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: isMobile ? 'flex-start' : 'flex-start',
                     px: 2,
                     position: 'relative',
                     zIndex: 1,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    flexWrap: 'wrap',
+                    justifyContent: isMobile ? 'flex-start' : 'flex-start',
+                    width: '100%',
+                  }}>
                     <Typography
                       sx={{
                         fontWeight: 'bold',
                         color: prediction.status === 'completed' ? 
                           (prediction.winner === prediction.creator.name ? '#1976d2' : '#757575') : 
                           '#757575',
+                        mr: 1,
                       }}
                     >
                       {prediction.creator.prediction}
@@ -155,61 +173,98 @@ export const PredictionList: React.FC<Props> = ({ predictions, onComplete }) => 
                         color: prediction.status === 'completed' ? 
                           (prediction.winner === prediction.creator.name ? '#1976d2' : '#757575') : 
                           '#757575',
+                        mr: isMobile ? 'auto' : 1,
                       }}
                     >
                       ({prediction.creator.name})
                     </Typography>
                     {prediction.status === 'completed' && (
-                      <Typography 
-                        variant="h6" 
-                        sx={{ 
-                          fontWeight: 'bold',
-                          color: prediction.winner === prediction.creator.name ? '#1976d2' : '#d32f2f',
-                          ml: 1,
-                          animation: 'fadeIn 0.5s ease-in-out'
-                        }}
-                      >
-                        {prediction.winner === prediction.creator.name ? '+' : '-'}¥{prediction.amount.toFixed(2)}
-                      </Typography>
+                      <>
+                        {isMobile && prediction.winner === prediction.creator.name && (
+                          <Chip
+                            label="胜"
+                            size="small"
+                            sx={{ 
+                              mr: 1,
+                              bgcolor: '#1976d2',
+                              color: '#ffffff',
+                              fontWeight: 'bold',
+                            }}
+                          />
+                        )}
+                        <Typography 
+                          variant="h6" 
+                          sx={{ 
+                            fontWeight: 'bold',
+                            color: prediction.winner === prediction.creator.name ? '#1976d2' : '#d32f2f',
+                            animation: 'fadeIn 0.5s ease-in-out'
+                          }}
+                        >
+                          {prediction.winner === prediction.creator.name ? '+' : '-'}¥{prediction.amount.toFixed(2)}
+                        </Typography>
+                        {!isMobile && prediction.winner === prediction.creator.name && (
+                          <Chip
+                            label="胜"
+                            size="small"
+                            sx={{ 
+                              ml: 1,
+                              bgcolor: '#1976d2',
+                              color: '#ffffff',
+                              fontWeight: 'bold',
+                            }}
+                          />
+                        )}
+                      </>
                     )}
                   </Box>
-                  {prediction.status === 'completed' && prediction.winner === prediction.creator.name && (
-                    <Chip
-                      label="胜"
-                      size="small"
-                      sx={{ 
-                        ml: 1,
-                        bgcolor: '#1976d2',
-                        color: '#ffffff',
-                        fontWeight: 'bold',
-                      }}
-                    />
-                  )}
                 </Box>
                 <Box
                   sx={{
                     flex: 1,
+                    width: '100%',
+                    height: isMobile ? '50%' : '100%',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'flex-end',
+                    justifyContent: isMobile ? 'flex-start' : 'flex-end',
                     px: 2,
                     position: 'relative',
                     zIndex: 1,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {prediction.status === 'completed' && (
-                      <Typography 
-                        variant="h6" 
-                        sx={{ 
-                          fontWeight: 'bold',
-                          color: prediction.winner === prediction.opponent.name ? '#2e7d32' : '#d32f2f',
-                          mr: 1,
-                          animation: 'fadeIn 0.5s ease-in-out'
-                        }}
-                      >
-                        {prediction.winner === prediction.opponent.name ? '+' : '-'}¥{prediction.amount.toFixed(2)}
-                      </Typography>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    flexWrap: 'wrap',
+                    justifyContent: isMobile ? 'flex-start' : 'flex-end',
+                    width: '100%',
+                  }}>
+                    {!isMobile && prediction.status === 'completed' && (
+                      <>
+                        {prediction.winner === prediction.opponent.name && (
+                          <Chip
+                            label="胜"
+                            size="small"
+                            sx={{ 
+                              mr: 1,
+                              bgcolor: '#2e7d32',
+                              color: '#ffffff',
+                              fontWeight: 'bold',
+                            }}
+                          />
+                        )}
+                        <Typography 
+                          variant="h6" 
+                          sx={{ 
+                            fontWeight: 'bold',
+                            color: prediction.winner === prediction.opponent.name ? '#2e7d32' : '#d32f2f',
+                            animation: 'fadeIn 0.5s ease-in-out',
+                            mr: 1
+                          }}
+                        >
+                          {prediction.winner === prediction.opponent.name ? '+' : '-'}¥{prediction.amount.toFixed(2)}
+                        </Typography>
+                      </>
                     )}
                     <Typography
                       sx={{
@@ -217,6 +272,7 @@ export const PredictionList: React.FC<Props> = ({ predictions, onComplete }) => 
                         color: prediction.status === 'completed' ? 
                           (prediction.winner === prediction.opponent.name ? '#2e7d32' : '#757575') : 
                           '#757575',
+                        mr: 1,
                       }}
                     >
                       {prediction.opponent.prediction}
@@ -227,23 +283,38 @@ export const PredictionList: React.FC<Props> = ({ predictions, onComplete }) => 
                         color: prediction.status === 'completed' ? 
                           (prediction.winner === prediction.opponent.name ? '#2e7d32' : '#757575') : 
                           '#757575',
+                        mr: isMobile ? 'auto' : 0,
                       }}
                     >
                       ({prediction.opponent.name})
                     </Typography>
+                    {isMobile && prediction.status === 'completed' && (
+                      <>
+                        {prediction.winner === prediction.opponent.name && (
+                          <Chip
+                            label="胜"
+                            size="small"
+                            sx={{ 
+                              mr: 1,
+                              bgcolor: '#2e7d32',
+                              color: '#ffffff',
+                              fontWeight: 'bold',
+                            }}
+                          />
+                        )}
+                        <Typography 
+                          variant="h6" 
+                          sx={{ 
+                            fontWeight: 'bold',
+                            color: prediction.winner === prediction.opponent.name ? '#2e7d32' : '#d32f2f',
+                            animation: 'fadeIn 0.5s ease-in-out'
+                          }}
+                        >
+                          {prediction.winner === prediction.opponent.name ? '+' : '-'}¥{prediction.amount.toFixed(2)}
+                        </Typography>
+                      </>
+                    )}
                   </Box>
-                  {prediction.status === 'completed' && prediction.winner === prediction.opponent.name && (
-                    <Chip
-                      label="胜"
-                      size="small"
-                      sx={{ 
-                        ml: 1,
-                        bgcolor: '#2e7d32',
-                        color: '#ffffff',
-                        fontWeight: 'bold',
-                      }}
-                    />
-                  )}
                 </Box>
               </Box>
             </Box>
@@ -260,7 +331,11 @@ export const PredictionList: React.FC<Props> = ({ predictions, onComplete }) => 
             </Box>
 
             {prediction.status === 'pending' && (
-              <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+              <Stack 
+                direction={isMobile ? 'column' : 'row'} 
+                spacing={2} 
+                sx={{ mt: 2 }}
+              >
                 <Button
                   variant="contained"
                   onClick={() => onComplete(prediction.id, prediction.creator.name)}
