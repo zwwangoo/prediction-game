@@ -79,6 +79,7 @@ export const PredictionForm: React.FC<Props> = ({ open, onClose, onSubmit, users
   };
 
   const handleClose = () => {
+    // 清除所有输入的值
     setTitle('');
     setDescription('');
     setAmount('');
@@ -87,11 +88,32 @@ export const PredictionForm: React.FC<Props> = ({ open, onClose, onSubmit, users
     setOpponent('');
     setOpponentPrediction('');
     setDueDate(null);
+    
+    // 清除当前焦点
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // 调用关闭回调
     onClose();
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={handleClose} 
+      maxWidth="sm"
+      fullWidth
+      disableRestoreFocus
+      keepMounted={false}
+      TransitionProps={{
+        onExited: () => {
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+        }
+      }}
+    >
       <DialogTitle>新建预测挑战</DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>

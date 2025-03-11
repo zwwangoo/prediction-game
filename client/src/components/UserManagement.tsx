@@ -18,8 +18,6 @@ import { format, startOfMonth, endOfDay } from 'date-fns';
 import zhCN from 'date-fns/locale/zh-CN';
 import { User } from '../types/user';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-
 interface UserStats {
   totalBets: number;      // 总参与场次（包括进行中的）
   completedBets: number;  // 已完成场次
@@ -46,8 +44,8 @@ export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
   // 使用useCallback包装fetchUserStats函数，避免不必要的重新创建
   const fetchUserStats = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/bets`);
-      const bets = await response.json();
+      const response = await fetch(`/api/predictions`);
+      const predictions = await response.json();
       
       const stats: Record<string, UserStats> = {};
       
@@ -70,21 +68,21 @@ export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
         processedBets[user.name] = new Set();
       });
 
-      // Calculate stats from all bets, ignoring date filters
-      bets.forEach((bet: any) => {
-        const creatorName = bet.creator.name;
-        const opponentName = bet.opponent.name;
-        const amount = parseFloat(bet.amount);
+      // Calculate stats from all predictions
+      predictions.forEach((prediction: any) => {
+        const creatorName = prediction.creator.name;
+        const opponentName = prediction.opponent.name;
+        const amount = parseFloat(prediction.amount);
 
         // Update creator stats
-        if (stats[creatorName] && !processedBets[creatorName].has(bet.id)) {
-          processedBets[creatorName].add(bet.id);
+        if (stats[creatorName] && !processedBets[creatorName].has(prediction.id)) {
+          processedBets[creatorName].add(prediction.id);
           stats[creatorName].totalBets++;
           stats[creatorName].totalAmount += amount;
           
-          if (bet.status === 'completed') {
+          if (prediction.status === 'completed') {
             stats[creatorName].completedBets++;
-            if (bet.winner === creatorName) {
+            if (prediction.winner === creatorName) {
               stats[creatorName].wonBets++;
               stats[creatorName].wonAmount += amount;
               stats[creatorName].netAmount += amount;
@@ -96,14 +94,14 @@ export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
         }
 
         // Update opponent stats
-        if (stats[opponentName] && !processedBets[opponentName].has(bet.id)) {
-          processedBets[opponentName].add(bet.id);
+        if (stats[opponentName] && !processedBets[opponentName].has(prediction.id)) {
+          processedBets[opponentName].add(prediction.id);
           stats[opponentName].totalBets++;
           stats[opponentName].totalAmount += amount;
           
-          if (bet.status === 'completed') {
+          if (prediction.status === 'completed') {
             stats[opponentName].completedBets++;
-            if (bet.winner === opponentName) {
+            if (prediction.winner === opponentName) {
               stats[opponentName].wonBets++;
               stats[opponentName].wonAmount += amount;
               stats[opponentName].netAmount += amount;
@@ -123,7 +121,7 @@ export const UserManagement: React.FC<Props> = ({ users, onUserAdded }) => {
 
   useEffect(() => {
     fetchUserStats();
-  }, [fetchUserStats]); // 依赖于fetchUserStats函数
+  }, [fetchUserStats]);
 
   const handleClose = () => {
     setOpen(false);
